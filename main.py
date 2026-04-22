@@ -4,7 +4,7 @@ def std_round(value:float):
     return round(value, 8)
 
 def print_iter(x:int, fx:float):
-    print(f"Xᵢ: {x}\tf(xᵢ): {fx}")
+    print(f"Xᵢ: i = {x}\tXᵢ = {fx}")
 
 def ErroAbsoluto(aproximação:float, exato:float):
     return std_round(abs(std_round(exato)-std_round(aproximação)))
@@ -26,8 +26,11 @@ def derivada_aprox(valor:float, func:callable):
 def gradiente(ingreme:bool, iteracoes:int, valor_inicial:float, passo:float, func:callable):
     valor = std_round(valor_inicial)
     for i in range (1, iteracoes+1):
-        valor = valor + std_round(passo*derivada_aprox(valor, func))
+        valor = valor + (1 if ingreme else -1) * std_round(passo*derivada_aprox(valor, func))
         print_iter(i, valor)
     return valor
 
-gradiente(True, 5, 5, 0.1, lambda x: math.pow(x,2) + 4*x +4)
+"""gradiente(True, 5, 5, 0.1, lambda x: math.pow(x,2) + 4*x +4)
+gradiente(False, 5, 5, 0.1, lambda x: math.pow(x,2) + 4*x +4)
+gradiente(False, 100, 5, 0.1, lambda x: math.pow(x,2) + 4*x +4)
+gradiente(False, 100, -5, 0.1, lambda x: math.pow(x,2) + 4*x +4)"""
