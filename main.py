@@ -22,3 +22,12 @@ def derivada_aprox(valor:float, func:callable):
     valor = std_round(valor)
     passo_x = 0.00000001
     return (std_round(func(valor+passo_x)) - std_round(func(valor-passo_x)))/(2*passo_x)
+
+def gradiente(ingreme:bool, iteracoes:int, valor_inicial:float, passo:float, func:callable):
+    valor = std_round(valor_inicial)
+    for i in range (1, iteracoes+1):
+        valor = valor + std_round(passo*derivada_aprox(valor, func))
+        print_iter(i, valor)
+    return valor
+
+gradiente(True, 5, 5, 0.1, lambda x: math.pow(x,2) + 4*x +4)
