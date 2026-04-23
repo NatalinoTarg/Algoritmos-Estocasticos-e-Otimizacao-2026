@@ -33,7 +33,7 @@ def derivada_aprox(valor:float | list, func:callable):
         args_forward = valor[:]
         args_forward[i] = valor[i] + passo_x
         args_backward[i] = valor[i] - passo_x
-        deriv.append((std_round(func(*args_forward)) - std_round(func(*args_backward))) / (2 * passo_x))
+        deriv.append(std_round((std_round(func(*args_forward)) - std_round(func(*args_backward))) / (2 * passo_x)))
     if retlist:
         return deriv
     else:
@@ -42,7 +42,7 @@ def derivada_aprox(valor:float | list, func:callable):
 def gradiente(ingreme:bool, iteracoes:int, valor_inicial:float, passo:float, func:callable):
     valor = std_round(valor_inicial)
     for i in range (1, iteracoes+1):
-        valor = valor + (1 if ingreme else -1) * std_round(passo*derivada_aprox(valor, func))
+        valor = std_round(valor + (1 if ingreme else -1) * std_round(passo*derivada_aprox(valor, func)))
         print_iter(i, valor)
     return valor
 
