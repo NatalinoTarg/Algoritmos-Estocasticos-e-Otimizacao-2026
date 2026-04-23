@@ -55,10 +55,15 @@ gradiente(False, 5, 5, 0.1, lambda x: math.pow(x,2) + 4*x +4)
 gradiente(False, 100, 5, 0.1, lambda x: math.pow(x,2) + 4*x +4)
 gradiente(False, 100, -5, 0.1, lambda x: math.pow(x,2) + 4*x +4)"""
 
-print("Argumentos(x, y, z, ... n)")
-inp = input()
-inp = "lambda "+inp+": "
-print("Função")
-inp = inp + input()
-funcao = eval(inp)
-print(inp, funcao(5, 10, 15))
+while (True):
+    try:
+        print("Argumentos(x, y, z, ... n)")
+        inp = input()
+        inp = "lambda "+inp+": "
+        print("Função")
+        inp = inp + input()
+        funcao = eval(inp)
+        break
+    except:
+        print("Função invalida!")
+print(inp, funcao(5))
