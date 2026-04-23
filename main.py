@@ -1,3 +1,4 @@
+import array
 import math
 
 def std_round(value:float):
@@ -18,10 +19,25 @@ def ErroRelativo(aproximação:float, exato:float, absoluto:float=None):
         exato = math.pow(10,-8)
     return absoluto/exato
 
-def derivada_aprox(valor:float, func:callable):
-    valor = std_round(valor)
+def derivada_aprox(valor:float | list, func:callable):
+    retlist = True
+    if(not isinstance(valor, list)):
+        valor = [valor]
+        retlist = False
     passo_x = 0.00000001
-    return (std_round(func(valor+passo_x)) - std_round(func(valor-passo_x)))/(2*passo_x)
+    for i in range(len(valor)):
+        valor[i] = std_round(valor[i])
+    deriv = []
+    for i in range(len(valor)):
+        args_backward = valor[:]
+        args_forward = valor[:]
+        args_forward[i] = valor[i] + passo_x
+        args_backward[i] = valor[i] - passo_x
+        deriv.append((std_round(func(*args_forward)) - std_round(func(*args_backward))) / (2 * passo_x))
+    if retlist:
+        return deriv
+    else:
+        return deriv[0]
 
 def gradiente(ingreme:bool, iteracoes:int, valor_inicial:float, passo:float, func:callable):
     valor = std_round(valor_inicial)
@@ -32,5 +48,7 @@ def gradiente(ingreme:bool, iteracoes:int, valor_inicial:float, passo:float, fun
 
 """gradiente(True, 5, 5, 0.1, lambda x: math.pow(x,2) + 4*x +4)
 gradiente(False, 5, 5, 0.1, lambda x: math.pow(x,2) + 4*x +4)
-gradiente(False, 100, 5, 0.1, lambda x: math.pow(x,2) + 4*x +4)
 gradiente(False, 100, -5, 0.1, lambda x: math.pow(x,2) + 4*x +4)"""
+gradiente(False, 100, 5, 0.1, lambda x: math.pow(x,2) + 4*x +4)
+
+print(derivada_aprox([2,1],lambda x, y: math.pow(x,2) + x*y))
