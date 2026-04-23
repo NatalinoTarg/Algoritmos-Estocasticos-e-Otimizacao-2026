@@ -6,6 +6,10 @@ from re import split
 def std_round(value:float):
     return round(value, 8)
 
+def safe_eval(expr: str) -> object:
+    allowed = {name: getattr(math, name) for name in dir(math) if not name.startswith("_")}
+    return eval(expr, {"__builtins__": {}}, allowed)
+
 def print_iter(x:int, fx:float):
     print(f"Xᵢ: i = {x}\tXᵢ = {fx}")
 
@@ -58,12 +62,13 @@ gradiente(False, 100, -5, 0.1, lambda x: math.pow(x,2) + 4*x +4)"""
 while (True):
     try:
         print("Argumentos(x, y, z, ... n)")
-        inp = input()
-        inp = "lambda "+inp+": "
+        arg = input()
         print("Função")
-        inp = inp + input()
-        funcao = eval(inp)
+        func = input()
+        inp = f"lambda {arg}: {func}"
+        funcao = safe_eval(inp)
+        funcao(*range(len(arg)))
         break
-    except:
+    except Exception:
         print("Função invalida!")
 print(inp, funcao(5))
