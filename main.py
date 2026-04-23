@@ -1,5 +1,7 @@
 import array
 import math
+import re
+from re import split
 
 def std_round(value:float):
     return round(value, 8)
@@ -39,6 +41,8 @@ def derivada_aprox(valor:float | list, func:callable):
     else:
         return deriv[0]
 
+"""print(derivada_aprox([2,1],lambda x, y: math.pow(x,2) + x*y))"""
+
 def gradiente(ingreme:bool, iteracoes:int, valor_inicial:float, passo:float, func:callable):
     valor = std_round(valor_inicial)
     for i in range (1, iteracoes+1):
@@ -48,7 +52,13 @@ def gradiente(ingreme:bool, iteracoes:int, valor_inicial:float, passo:float, fun
 
 """gradiente(True, 5, 5, 0.1, lambda x: math.pow(x,2) + 4*x +4)
 gradiente(False, 5, 5, 0.1, lambda x: math.pow(x,2) + 4*x +4)
-gradiente(False, 100, -5, 0.1, lambda x: math.pow(x,2) + 4*x +4)"""
 gradiente(False, 100, 5, 0.1, lambda x: math.pow(x,2) + 4*x +4)
+gradiente(False, 100, -5, 0.1, lambda x: math.pow(x,2) + 4*x +4)"""
 
-print(derivada_aprox([2,1],lambda x, y: math.pow(x,2) + x*y))
+print("Argumentos(x, y, z, ... n)")
+inp = input()
+inp = "lambda "+inp+": "
+print("Função")
+inp = inp + input()
+funcao = eval(inp)
+print(inp, funcao(5, 10, 15))
