@@ -8,7 +8,9 @@ def std_round(value:float):
 
 def safe_eval(expr: str) -> object:
     allowed = {name: getattr(math, name) for name in dir(math) if not name.startswith("_")}
-    return eval(expr, {"__builtins__": {}}, allowed)
+    allowed["math"] = math
+    allowed["__builtins__"] = {}
+    return eval(expr, allowed)
 
 def print_iter(x:int, fx:float):
     print(f"Xᵢ: i = {x}\tXᵢ = {fx}")
@@ -69,6 +71,6 @@ while (True):
         funcao = safe_eval(inp)
         funcao(*range(len(arg)))
         break
-    except Exception:
-        print("Função invalida!")
-print(inp, funcao(5))
+    except Exception as ex:
+        print("Função invalida!",ex)
+print(inp, derivada_aprox(5, funcao), funcao(5))
