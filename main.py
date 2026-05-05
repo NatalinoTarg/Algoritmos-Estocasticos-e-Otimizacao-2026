@@ -49,14 +49,28 @@ def derivada_aprox(valor:float | list, func:callable, passo: int = 8):
 
 """print(derivada_aprox([2,1],lambda x, y: math.pow(x,2) + x*y))"""
 
-def seg_derivada_aprox(valor:float, func:callable,  passo: int = 4):
-    valor = std_round(valor)
+def seg_derivada_aprox(valor:float | list, func:callable,  passo: int = 4):
+    retlist = True
+    if(not isinstance(valor, list)):
+        valor = [valor]
+        retlist = False
     passo_x = math.pow(10,-passo)
-    arr = (std_round(func(valor-passo_x)) - std_round(2*func(valor)) + std_round(func(valor+passo_x)))
-    passoSqr = std_round(passo_x**2)
-    passoDoze = std_round(passoSqr/12)
-    arr = std_round(arr/passoSqr)
-    return std_round(arr - passoDoze)
+    deriv = []
+    for i in range(len(valor)):
+        args_backward = valor[:]
+        args_forward = valor[:]
+        args_forward[i] = std_round(valor[i] + passo_x)
+        args_backward[i] = std_round(valor[i] - passo_x)
+        arr = (std_round(func(*args_backward)) - std_round(2*func(*valor)) + std_round(func(*args_forward)))
+        passoSqr = std_round(passo_x**2)
+        passoDoze = std_round(passoSqr/12)
+        arr = std_round(arr/passoSqr)
+        arr = std_round(arr - passoDoze)
+        deriv.append(arr)
+    if retlist:
+        return deriv
+    else:
+        return deriv[0]
 
 print(seg_derivada_aprox(5, lambda x: x**2 + 4*x +4))
 
@@ -102,4 +116,6 @@ def newton(iteracoes:int, valor_inicial:float, func:callable):
         print_iter(i, valor)
     return valor
 
-newton(iteracoes=5, valor_inicial=5, func=lambda x: x**2 + 4*x +4)
+#newton(iteracoes=5, valor_inicial=5, func=lambda x: x**2 + 4*x +4)
+#newton(iteracoes=100, valor_inicial=5, func=getLambdaInput())
+
