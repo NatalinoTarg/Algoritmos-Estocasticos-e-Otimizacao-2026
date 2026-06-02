@@ -41,14 +41,14 @@ def bit_rep(ind:list[int], bit_size:int=bit_size) -> list[str]:
 def int_rep(ind:list[str]) -> list[int]:
     return [ int(i,2) for i in ind ]
 
-def probabilidade_rep(ind:list[int], f:callable, apt:list[float]=list()) -> list:
+def probabilidade_rep(ind:list[int], f:callable, apt:list[float]=list()) -> list[float]:
     if(len(apt) == 0):
         apt = aptidao(ind, f)
     sm = std_round(sum(apt))
     print('Σ: ',sm)
     return [ std_round(i/sm) for i in apt ]
 
-def invercao_probabilidade_rep(ind:list[int], f:callable, apt:list[float]=list()) -> list:
+def inversao_probabilidade_rep(ind:list[int], f:callable, apt:list[float]=list()) -> list:
     if(len(apt) == 0):
         apt = aptidao(ind, f)
     apt = [std_round(1/(i if i != 0 else 1)) for i in apt]
@@ -230,7 +230,7 @@ crossover_points:list[int]|list[list[int]]=crossover_points
         aptid = aptidao(individuos, func)
         print(f"Aptidão: ")
         print(aptid)
-        probabilidade_culling = invercao_probabilidade_rep(individuos, func, aptid)
+        probabilidade_culling = inversao_probabilidade_rep(individuos, func, aptid)
         print("Probabilidade de eliminação:")
         print(probabilidade_culling)
         selected = regra_eliminacao(i,probabilidade_culling,to_select)
