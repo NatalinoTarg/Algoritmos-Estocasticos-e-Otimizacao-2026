@@ -4,6 +4,11 @@ from main import std_round
 import math
 import random
 
+"""
+random.seed(42)
+np.random.seed(42)
+"""
+
 def makeGraphFromFile(Filename:str=None):
     if Filename is None:
         Filename = input
@@ -40,7 +45,7 @@ class position:
         self.y = y
 
     def showPaths(self):
-        return [f"{p.id}:  {p.phero} in {p.prev.id}<->{p.next.id}" for p in self.paths ]
+        return [f"{p.id}: {p.prev.id}<->{p.next.id}" for p in self.paths ]
 
 class path:
     def __init__(self, prev:position, next:position, distance:float=None):
@@ -55,9 +60,6 @@ class path:
             self.distance = std_round(math.sqrt((next.x - prev.x)**2 + (next.y - prev.y)**2))
 
 num_simulacoes = 10000  # Numero de simulações Monte Carlo
-
-# Definir semente aleatória para que os resultados sejam replicáveis
-np.random.seed(42)
 
 # Função para gerar uma rota aleatória e calcular a sua distância total
 def gerar_rota_e_distancia(graph:list[position]):
