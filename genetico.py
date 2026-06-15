@@ -2,16 +2,13 @@
 import functools
 import math
 import random
+from traceback import print_tb
+
+from matplotlib.pylab import rand
 
 
 def std_round(value:float):
     return round(value, 8)
-
-f = lambda x: x**2
-
-individuos = [0, 11, 46, 63]
-
-bit_size = 6
 
 R_substituicao = 0.5
 
@@ -21,36 +18,53 @@ r_eliminacao = 0.34
 
 t_mutacao = 0.25
 
-def aptidao(ind:list[int], f:callable) -> list[float]:
+class position:
+    def __init__(self, id, x:float=None, y:float=None, start:bool=False, end:bool=False):
+        self.id = id
+        self.paths = []
+        self.start = start
+        self.end = end
+        self.x = x
+        self.y = y
+
+    def showPaths(self):
+        return [f"{p.id}: {p.prev.id}<->{p.next.id}" for p in self.paths ]
+
+class path:
+    def __init__(self, prev:position, next:position, distance:float=None):
+        self.prev = prev
+        self.next = next
+        self.id = f"{prev.id}<->{next.id}"
+        self.prev.paths.append(self)
+        self.next.paths.append(self)
+        if prev.x is None or prev.y is None or next.x is None or next.y is None:
+            self.distance = 1 if distance is None else distance
+        else:
+            self.distance = std_round(math.sqrt((next.x - prev.x)**2 + (next.y - prev.y)**2))
+
+def aptidao(ind:list[position], f:callable) -> list[float]:
     apt = [ std_round(f(i)) for i in ind ]
+    apt_incorrect = None
     mn = min(apt)
     if mn < 0:
-        print(apt)
         mn = abs(mn)
+        apt_incorrect = list(apt)
         apt = [std_round(i+mn) for i in apt]
-    return apt
+    return apt, apt_incorrect
 
-def bit(valor:int, bit_size:int=bit_size) -> str:
-    return f'{valor:0{bit_size}b}'
+def int_rep(ind:list[list[position]]) -> list[list[int]]:
+    return [ [ int(i.id) for i in rota ] for rota in ind ]
 
-#print(bit(11))
-
-def bit_rep(ind:list[int], bit_size:int=bit_size) -> list[str]:
-    return [ bit(i,bit_size) for i in ind ]
-
-def int_rep(ind:list[str]) -> list[int]:
-    return [ int(i,2) for i in ind ]
-
-def probabilidade_rep(ind:list[int], f:callable, apt:list[float]=list()) -> list[float]:
+def probabilidade_rep(ind:list[position], f:callable, apt:list[float]=list()) -> list[float]:
     if(len(apt) == 0):
-        apt = aptidao(ind, f)
+        apt,_ = aptidao(ind, f)
     sm = std_round(sum(apt))
     print('Σ: ',sm)
     return [ std_round(i/sm) for i in apt ]
 
-def inversao_probabilidade_rep(ind:list[int], f:callable, apt:list[float]=list()) -> list:
+def inversao_probabilidade_rep(ind:list[position], f:callable, apt:list[float]=list()) -> list:
     if(len(apt) == 0):
-        apt = aptidao(ind, f)
+        apt,_ = aptidao(ind, f)
     apt = [std_round(1/(i if i != 0 else 1)) for i in apt]
     sm = std_round(sum(apt))
     return [ std_round(i/sm) for i in apt ]
@@ -112,8 +126,8 @@ def elitist(iteration:int, original:list[float], to_select:int=2):
         selected.append(probabilidades[i][0])
     return selected
 
-def crossover(casal:list[str], points:list[int]=crossover_points):
-    filhos = ["",""]
+def crossover(casal:list[list[position]], points:list[int]=crossover_points):
+    filhos = [[],[]]
     points.sort()
     lenPoint = len(points)
     pieces = []
@@ -142,18 +156,19 @@ filh = crossover(casal_bit)
 print('Filhos:\n',filh)
 print(int_rep(filh),'\n')"""
 
-def mutacao(iteration:int, to_mut:list[int], bit_size:int=bit_size, r_mut:float=t_mutacao):
+def mutacao(iteration:int, to_mut:list[list[position]], r_mut:float=t_mutacao):
     ret = []
     for f in to_mut:
-        f = bit(f,bit_size)
         if roleta(r_mut):
-            flist = list(f)
-            idx = random.randint(0,5)
-            flist[idx] = str(int(not bool(int(flist[idx]))))
-            f = "".join(flist)
-        ret.append(int(f,2))
+            idx = random.randint(0,len(f)-1)
+            idx2 = random.randint(0,len(f)-1)
+            temp = f[idx]
+            f[idx] = f[idx2]
+            f[idx2] = temp
+        ret.append(f)
     return ret
 
+"""
 def mutacao_fixed_rolls(rolls:list[list[int]], func:callable, gene:int, iteration:int,original:list[int], bit_size:int=bit_size, r_mut:float=t_mutacao):
     to_mut = list(original)
     to_mut.sort(key=func)
@@ -167,6 +182,7 @@ def mutacao_fixed_rolls(rolls:list[list[int]], func:callable, gene:int, iteratio
             f = "".join(flist)
         ret.append(int(f,2))
     return ret
+"""
 
 """filh[0] = mutacao(filh[0])
 filh[1] = mutacao(filh[1])
@@ -174,12 +190,50 @@ filh[1] = mutacao(filh[1])
 print('Mutado:\n',filh)
 print(int_rep(filh),'\n')"""
 
+
+def makeGraphFromFile(Filename:str=None):
+    if Filename is None:
+        Filename = input
+    graph = []
+    try:
+        file = open(Filename, "rt")
+        coord = False
+        for line in file: 
+            line = line.strip()
+            if not coord:
+                if line == "NODE_COORD_SECTION":
+                    coord = True
+            else:
+                info = line.split(' ')
+                graph.append(position(info[0],float(info[1]),float(info[2])))
+        file.close()
+    except Exception as e:
+        print(e)
+    visited = set()
+    for node in graph:
+        visited.add(node)
+        for node2 in graph:
+            if node2 not in visited:
+                path(node,node2)
+    return graph
+
+def rota_distancia(rota:list[position]):
+    distancia_total = 0
+    
+    # Calcular a distância do percurso entre as cidades
+    for i in range(len(rota) - 1):
+        distancia_total += next(x for x in rota[i].paths if x.next is rota[i+1] or x.prev is rota[i+1]).distance
+    
+    # Adicionar a distância de retorno da última cidade para a primeira
+    distancia_total += next(x for x in rota[-1].paths if x.next is rota[0] or x.prev is rota[0]).distance
+    
+    return distancia_total
+
 def iterate_generations(max_iter:int=5, 
-individuos:list[int]=individuos, 
-bit_size:int=bit_size, 
+individuos:list[list[position]]=[],
 R_substituicao:float=R_substituicao, 
 t_mutacao:float=t_mutacao, 
-func:callable=f,
+func:callable=lambda x: x**2,
 regra_selecao:callable=roll_till_r,
 regra_mutacao:callable=mutacao,
 regra_eliminacao:callable=roll_till_r,
@@ -187,11 +241,13 @@ crossover_points:list[int]|list[list[int]]=crossover_points
 ):
     for i in range(max_iter):
         print(f"\nGeração {i}: ")
-        print(individuos)
+        print('\r\n'.join(str(sublist) for sublist in int_rep(individuos)))
 
-        print(bit_rep(individuos, bit_size))
 
-        aptid = aptidao(individuos, func)
+        aptid,incorrect = aptidao(individuos, func)
+        if(incorrect):
+            print("Maximizada:")
+            print(incorrect)
         print(f"Aptidão: ")
         print(aptid)
 
@@ -202,32 +258,31 @@ crossover_points:list[int]|list[list[int]]=crossover_points
 
         selected = regra_selecao(i, probabilidade, to_select)
         print("Selecionado para reprodução:")
-        print([f"{i}: {individuos[i]}" for i in selected])
+        print("\r\n".join([f"{i}: {[j.id for j in individuos[i]]}" for i in selected]))
         individuos
         j = 0
         masx = len(selected)
         filhos = []
         while j < masx:
             casal = [individuos[selected[j]], individuos[selected[j+1]]]
-            casal_bit = bit_rep(casal, bit_size)
 
-            print(f'Pais {j+1}:\n',casal)
-            print(casal_bit,'\n')
+            print(f'Pais {j+1}:')
+            print(int_rep(casal),'\n')
 
             if isinstance(crossover_points, list) and isinstance(crossover_points[0], list):
-                filh = crossover(casal_bit,crossover_points[i])
+                filh = crossover(casal,crossover_points[i])
             else:
-                filh = crossover(casal_bit,crossover_points)
-            print(f'Filhos {j+1}:\n',filh)
-            filhos.extend(int_rep(filh))
-            print(filhos,'\n')
+                filh = crossover(casal,crossover_points)
+            print(f'Filhos {j+1}:')
+            filhos.extend(filh)
+            print(int_rep(filhos))
             j += 2
 
-        filhos = regra_mutacao(i, filhos, bit_size ,t_mutacao)
-        print('Mutado:\n',filhos)
-        print(bit_rep(filhos,bit_size),'\n')
+        filhos = regra_mutacao(i, filhos, t_mutacao)
+        print('Mutado:')
+        print(int_rep(filhos),'\n')
 
-        aptid = aptidao(individuos, func)
+        aptid,_ = aptidao(individuos, func)
         print(f"Aptidão: ")
         print(aptid)
         probabilidade_culling = inversao_probabilidade_rep(individuos, func, aptid)
@@ -235,64 +290,42 @@ crossover_points:list[int]|list[list[int]]=crossover_points
         print(probabilidade_culling)
         selected = regra_eliminacao(i,probabilidade_culling,to_select)
         print("Selecionado para eliminação:")
-        print([f"{i}: {individuos[i]}" for i in selected])
+        print("\r\n".join([f"{i}: {[j.id for j in individuos[i]]}" for i in selected]))
         for j in selected:
             individuos[j] = None
         for j in range(len(selected)):
             individuos.remove(None)
         individuos.extend(filhos)
         print("Pos-Reprodução:")
-        print(individuos)
+        print('\r\n'.join(str(sublist) for sublist in int_rep(individuos)))
 
-    print(f"\r\nIndividuos finais: {individuos}")
-    print(aptidao(individuos, func))
+    print(f"\r\nIndividuos finais: \r\n{'\r\n'.join(str(sublist) for sublist in int_rep(individuos))}")
+    print("\r\n".join([str(apt) for apt in list(aptidao(individuos, func))]))
 
-#iterate_generations()
-#iterate_generations(max_iter=100)
+graph = makeGraphFromFile("berlin10.tsp")
 
-#random.shuffle(individuos)
-#iterate_generations(max_iter=10, func=lambda x: x**2 - 63*x + 993)
+random.seed(42)
+ind = [
+        random.sample(graph,len(graph)),
+        random.sample(graph,len(graph)),
+        random.sample(graph,len(graph)),
+        random.sample(graph,len(graph)),
+        random.sample(graph,len(graph)),
+        random.sample(graph,len(graph))]
 
-
-#fi1indi = [ 1, 12, 20, 24, 50, 54 ]
-"""fi1indi = [ 60, 48, 6, 26, 20, 24 ]
-
-iterate_generations(2, fi1indi, R_substituicao=std_round(2/3),t_mutacao=0, func=lambda x: -x**3+50*x**2-40*x)"""
-
-rolls = [
-    [1, 3],
-    [1, -1],
-    [1, 2],
-    ]
-selection = functools.partial(perc_by_iteration, rolls)
-
-rolls_mut = [
-    [0.1, 0.15],
-    [0.18, 0.8],
-    [0.6, 0.75],
-]
-
-
-fn = lambda x: abs(x*math.sin(math.sqrt(x)))
-mut = functools.partial(mutacao_fixed_rolls, rolls_mut, fn,2)
-
-cross = [
-    [2],
-    [1, 4],
-    [3],
-]
-
-
-iterate_generations(max_iter=3, 
-                    individuos=[2, 8, 14,16, 22, 31], 
-                    bit_size=5,
+print("Distancia inicial:")
+print('\r\n'.join(str(rota_distancia(rota)) for rota in ind))
+iterate_generations(max_iter=10, 
+                    individuos=ind, 
                     R_substituicao=1/3,
                     t_mutacao=0.25,
-                    func=fn,
-                    regra_selecao=selection, 
-                    regra_mutacao=mut,
+                    func=lambda x: 1 / (1 + rota_distancia(x)),
+                    regra_selecao=roll_till_r, 
+                    regra_mutacao=mutacao,
                     regra_eliminacao=elitist,
-                    crossover_points=cross)
+                    crossover_points=[3])
 
+print("Distancia Final:")
+print('\r\n'.join(str(rota_distancia(rota)) for rota in ind))
 
 #iterate_generations(20, [1, 2, 4, 8, 16, 32], 6, 2/6, 0.25, lambda x: x**3 + x + 3, roll_till_r, mutacao, elitist, [0,1,2,3,4,5])
