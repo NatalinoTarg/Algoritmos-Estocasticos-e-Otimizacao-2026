@@ -611,27 +611,39 @@ P⁴14 = 0.55
 iteração 5
 
 """
+import sys, io
+
+from main import std_round
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 import math
 import random
 
+from click import File
+
 class position:
-    def __init__(self, id, start:bool=False, end:bool=False):
+    def __init__(self, id, x:float=None, y:float=None, start:bool=False, end:bool=False):
         self.id = id
         self.paths = []
         self.start = start
         self.end = end
+        self.x = x
+        self.y = y
 
     def showPaths(self):
         return [f"{p.id}:  {p.phero} in {p.prev.id}←→{p.next.id}" for p in self.paths ]
 
 class path:
-    def __init__(self, prev:position, next:position, initial_phero:int=1):
+    def __init__(self, prev:position, next:position, initial_phero:int=1, distance:float=None):
         self.phero = initial_phero
         self.prev = prev
         self.next = next
         self.id = f"τ{prev.id}{next.id}"
         self.prev.paths.append(self)
         self.next.paths.append(self)
+        if prev.x is None or prev.y is None or next.x is None or next.y is None:
+            self.distance = 1 if distance is None else distance
+        else:
+            self.distance = std_round(math.sqrt((next.x - prev.x)**2 + (next.y - prev.y)**2))
 
 class ant:
     def __init__(self, phero:float):
@@ -709,6 +721,8 @@ def iterate_ant( graph:list[position], max_iter:int=5, ants:int=4, pheromone:int
         if(edge.start):
             init = edge
             break
+    if init is None:
+        init = graph[random.randint(0,len(graph)-1)]
     paths = set([ p for pos in graph for p in pos.paths])
     for i in range( max_iter):
         print(f"\r\n\r\niteração {i+1}:")
@@ -756,13 +770,14 @@ def iterate_ant( graph:list[position], max_iter:int=5, ants:int=4, pheromone:int
         displayGraph(paths)
 
         for at in hive:
-            phero = at.phero/len(at.path)
+            phero = at.phero/sum([ p.distance for p in at.path])
             for p in at.path:
                 p.phero += phero
         print("\r\nFeromonios adicionados:")
         displayGraph(paths)
 
 r_evaporation = 0.5
+"""
 edge1 = position(1,start=True)
 edge2 = position(2)
 edge3 = position(3)
@@ -780,4 +795,34 @@ path(edge3,edge4, 1)
 
 path(edge4,edge5, 1)
 
-iterate_ant([edge1, edge2, edge3, edge4, edge5], 5, 4, 1)
+iterate_ant(graph=[edge1, edge2, edge3, edge4, edge5], max_iter=5, ants=4, pheromone=1,r_evaporation=r_evaporation)
+"""
+
+def makeGraphFromFile(Filename:str=None):
+    if Filename is None:
+        Filename = input
+    graph = []
+    try:
+        file = open(Filename, "rt")
+        coord = False
+        for line in file: 
+            line = line.strip()
+            if not coord:
+                if line == "NODE_COORD_SECTION":
+                    coord = True
+            else:
+                info = line.split(' ')
+                graph.append(position(info[0],float(info[1]),float(info[2])))
+        file.close()
+    except Exception as e:
+        print(e)
+    visited = set()
+    for node in graph:
+        visited.add(node)
+        for node2 in graph:
+            if node2 not in visited:
+                path(node,node2)
+    return graph
+
+graph = makeGraphFromFile("berlin10.tsp")
+iterate_ant(graph=graph, max_iter=5, ants=4, pheromone=1000,r_evaporation=r_evaporation)
